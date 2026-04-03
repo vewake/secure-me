@@ -1,0 +1,62 @@
+services:
+  # ──────────────────────────────────────────
+  # PostgreSQL database
+  # ──────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: secureme
+      POSTGRES_PASSWORD: secureme
+      POSTGRES_DB: secureme
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secureme -d secureme"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────
+  # Backend API  (Express + Prisma)
+  # ──────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://secureme:secureme@db:5432/secureme
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+
+  # ──────────────────────────────────────────
+  # Web portal  (Next.js 15)
+  # ──────────────────────────────────────────
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        # Build-time values are baked into the Next.js bundle.
+        # Override them via a .env file or shell environment before building.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+        NEXT_PUBLIC_MAPPLS_API_KEY: ${NEXT_PUBLIC_MAPPLS_API_KEY:-}
+        NEXT_PUBLIC_APP_DOWNLOAD_URL: ${NEXT_PUBLIC_APP_DOWNLOAD_URL:-}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      PORT: 3001
+    ports:
+      - "3001:3001"
+
+volumes:
+  postgres_data:

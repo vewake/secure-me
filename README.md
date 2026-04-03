@@ -82,7 +82,14 @@ cd secure-me
 cp backend/.env.example backend/.env
 cp web/.env.example web/.env
 
-# 3. Start all services
+# 3. (Optional) Override default DB credentials and JWT secret
+#    Create a .env file in the repo root:
+#      POSTGRES_USER=secureme
+#      POSTGRES_PASSWORD=strong_password_here
+#      POSTGRES_DB=secureme
+#      JWT_SECRET=strong_jwt_secret_here
+
+# 4. Start all services
 docker compose up --build
 ```
 

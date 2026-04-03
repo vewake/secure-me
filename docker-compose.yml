@@ -6,15 +6,15 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: secureme
-      POSTGRES_PASSWORD: secureme
-      POSTGRES_DB: secureme
+      POSTGRES_USER: ${POSTGRES_USER:-secureme}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secureme}
+      POSTGRES_DB: ${POSTGRES_DB:-secureme}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U secureme -d secureme"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-secureme} -d ${POSTGRES_DB:-secureme}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,7 +31,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://secureme:secureme@db:5432/secureme
+      DATABASE_URL: postgresql://${POSTGRES_USER:-secureme}:${POSTGRES_PASSWORD:-secureme}@db:5432/${POSTGRES_DB:-secureme}
       JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
       PORT: 3000
     ports:
